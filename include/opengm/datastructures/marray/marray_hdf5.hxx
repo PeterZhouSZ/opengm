@@ -74,12 +74,60 @@ template<class T>
     void load(const hid_t&, const std::string&, Marray<T>&);
 template<class T>
     void loadShape(const hid_t&, const std::string&, Vector<T>&);
+template<class T>
+    void loadVec(const hid_t&, const std::string&, std::vector<T>&);
 template<class T, class BaseIterator, class ShapeIterator>
     void loadHyperslab(const hid_t&, const std::string&,
         BaseIterator, BaseIterator, ShapeIterator, Marray<T>&);
 
 // type conversion from C++ to HDF5
 
+#ifdef BIGENDIAN
+// \cond suppress doxygen
+template<class T>
+inline hid_t uintTypeHelper() {
+   switch(sizeof(T)) {
+       case 1:
+           return H5T_STD_U8BE;
+       case 2:
+           return H5T_STD_U16BE;
+       case 4:
+           return H5T_STD_U32BE;
+       case 8:
+           return H5T_STD_U64BE;
+       default:
+           throw std::runtime_error("No matching HDF5 type.");
+   }
+}
+
+template<class T>
+inline hid_t intTypeHelper() {
+   switch(sizeof(T)) {
+       case 1:
+           return H5T_STD_I8BE;
+       case 2:
+           return H5T_STD_I16BE;
+       case 4:
+           return H5T_STD_I32BE;
+       case 8:
+           return H5T_STD_I64BE;
+       default:
+           throw std::runtime_error("No matching HDF5 type.");
+   }
+}
+
+template<class T>
+inline hid_t floatingTypeHelper() {
+   switch(sizeof(T)) {
+       case 4:
+           return H5T_IEEE_F32BE;
+       case 8:
+           return H5T_IEEE_F64BE;
+       default:
+           throw std::runtime_error("No matching HDF5 type.");
+   }
+}
+#else
 // \cond suppress doxygen
 template<class T>
 inline hid_t uintTypeHelper() {
@@ -124,6 +172,7 @@ inline hid_t floatingTypeHelper() {
            throw std::runtime_error("No matching HDF5 type.");
    }
 }
+#endif
 
 template<class T>
 inline hid_t hdf5Type();
@@ -509,6 +558,29 @@ void loadShape(
     H5Dclose(dataset);
     H5Sclose(filespace);
     handleCheck.check();
+}
+
+/// Load a vector of an HDF5 dataset.
+///
+/// \param groupHandle Handle of the parent HDF5 file or group.
+/// \param datasetName Name of the HDF5 dataset.
+/// \param out Shape.
+///
+/// \sa load()
+///
+template<class T>
+void loadVec(
+    const hid_t& groupHandle,
+    const std::string& datasetName,
+    std::vector<T>& out
+)
+{
+    marray::Marray<T> v;
+    load( groupHandle,datasetName,v);
+    out.resize(v.size());
+    for(size_t j=0; j<v.size(); ++j) {
+       out[j] = v(j);
+    }
 }
 
 /// Load a hyperslab from an HDF5 dataset into an Marray.

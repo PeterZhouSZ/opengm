@@ -14,12 +14,13 @@ from _inference_interface_generator import _inject_interface , InferenceBase
 import inference
 import hdf5
 import benchmark
-
+from _to_native_converter import to_native_boost_python_enum_converter
 # initialize solver/ inference dictionaries
 _solverDicts=[
    (inference.adder.minimizer.solver.__dict__ ,     'adder',       'minimizer' ),
    (inference.adder.maximizer.solver.__dict__,      'adder',       'maximizer' ),
-   (inference.multiplier.integrator.solver.__dict__,'adder',       'integrator'),
+   (inference.multiplier.integrator.solver.__dict__,'adder',       'integrator'),  # todo(jyunes) XXX should this be adder instead?
+   (inference.adder.logsumexp.solver.__dict__,      'adder',       'logsumexp'),
    (inference.multiplier.minimizer.solver.__dict__, 'multiplier',  'minimizer' ),
    (inference.multiplier.maximizer.solver.__dict__, 'multiplier',  'maximizer' ),
    (inference.multiplier.integrator.solver.__dict__,'multiplier',  'integrator')

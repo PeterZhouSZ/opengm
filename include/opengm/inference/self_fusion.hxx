@@ -63,7 +63,7 @@ struct FusionVisitor{
             std::vector<LabelType> &    argBest,
             ValueType &                 value,
             ValueType &                 bound,
-            UInt64Type                  fuseNth=1
+            size_t                      fuseNth=1
         )
     :   gm_(selfFusion.graphicalModel()),
         selfFusion_(selfFusion),
@@ -72,7 +72,7 @@ struct FusionVisitor{
         iteration_(0),
         fuseNth_(fuseNth),
         value_(value),
-                bound_(bound),
+        bound_(bound),
         argFromInf_(selfFusion.graphicalModel().numberOfVariables()),
         argBest_(argBest),
         argOut_(selfFusion.graphicalModel().numberOfVariables()),
@@ -245,8 +245,8 @@ struct FusionVisitor{
     
     FusionMoverType fusionMover_;
 
-    UInt64Type iteration_;
-    UInt64Type fuseNth_;
+    size_t iteration_;
+    size_t fuseNth_;
 
     ValueType & value_;
     ValueType & bound_;
@@ -280,19 +280,32 @@ public:
     typedef INFERENCE ToFuseInferenceType;
 
     enum FusionSolver{
-        QpboFusion,
-        CplexFusion,
-        LazyFlipperFusion
+        QpboFusion=0,
+        CplexFusion=1,
+        LazyFlipperFusion=2
+    };
+
+
+    template<class _GM>
+    struct RebindGm{
+        typedef typename INFERENCE:: template RebindGm<_GM>::type RebindedInf;
+        typedef SelfFusion<RebindedInf> type;
+    };
+
+    template<class _GM,class _ACC>
+    struct RebindGmAndAcc{
+        typedef typename INFERENCE:: template RebindGmAndAcc<_GM, _ACC>::type RebindedInf;
+        typedef SelfFusion<RebindedInf> type;
     };
 
 
    class Parameter {
    public:
       Parameter(
-        const UInt64Type fuseNth=1,
+        const size_t fuseNth=1,
         const FusionSolver fusionSolver=LazyFlipperFusion,
         const typename INFERENCE::Parameter & infParam = typename INFERENCE::Parameter(),
-        const UInt64Type maxSubgraphSize=2,
+        const size_t maxSubgraphSize=2,
         const bool reducedInf = false,
         const bool tentacles = false,
         const bool connectedComponents = false,
@@ -311,10 +324,36 @@ public:
       {
 
       }
-      UInt64Type fuseNth_;
+
+      template<class P>
+      Parameter(
+        const P & p
+      )
+      : fuseNth_(p.fuseNth_),
+        fusionSolver_(),
+        infParam_(p.infParam_),
+        maxSubgraphSize_(p.maxSubgraphSize_),
+        reducedInf_(p.reducedInf_),
+        connectedComponents_(p.connectedComponents_),
+        tentacles_(p.tentacles_),
+        fusionTimeLimit_(p.fusionTimeLimit_),
+        numStopIt_(p.numStopIt_)
+      { 
+        if(p.fusionSolver_ == 0){
+            fusionSolver_ = QpboFusion;
+        }
+        else if(p.fusionSolver_ == 1){
+            fusionSolver_ = CplexFusion;
+        }
+        else if(p.fusionSolver_ == 2){
+            fusionSolver_ = LazyFlipperFusion;
+        }
+      }
+
+      size_t fuseNth_;
       FusionSolver fusionSolver_;
       typename INFERENCE::Parameter infParam_;
-      UInt64Type maxSubgraphSize_;
+      size_t maxSubgraphSize_;
       bool reducedInf_;
       bool connectedComponents_;
       bool tentacles_;

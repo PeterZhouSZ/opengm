@@ -7,6 +7,7 @@
 #include <opengm/operations/minimizer.hxx>
 #include <opengm/operations/maximizer.hxx>
 #include <opengm/operations/integrator.hxx>
+#include <opengm/operations/logsumexp.hxx>
 
 #include "pyInference.hxx"
 #include "pyIcm.hxx"
@@ -72,6 +73,8 @@
 
 #if (defined(WITH_VIGRA) && defined(WITH_QPBO) ) || (defined(WITH_BLOSSOM5) && defined(WITH_PLANARITY) ) 
 #include "pyCgc.hxx"
+#endif
+#if defined(WITH_QPBO) || defined(WITH_CPLEX) || defined(WITH_BLOSSOM5) && defined(WITH_PLANARITY)
 #include "pyIntersectionBased.hxx"
 #endif
 
@@ -110,6 +113,7 @@ BOOST_PYTHON_MODULE_INIT(_inference) {
    std::string minimizerString="minimizer";
    std::string maximizerString="maximizer";
    std::string integratorString="integrator";
+   std::string logsumexpString="logsumexp";
    std::string substring,submoduleName,subsubmoduleName,subsubstring;
    docstring_options doc_options(true,true,false);
    scope current;
@@ -182,7 +186,7 @@ BOOST_PYTHON_MODULE_INIT(_inference) {
 
         #if defined(WITH_QPBO) || defined(WITH_CPLEX) || defined(WITH_BLOSSOM5) && defined(WITH_PLANARITY)
         //export_cgc<opengm::python::GmAdder,opengm::Minimizer>();
-       	export_intersection_based<opengm::python::GmAdder,opengm::Minimizer>();
+       	//export_intersection_based<opengm::python::GmAdder,opengm::Minimizer>();
         #endif
 
          //export_lp_inference<opengm::python::GmAdder,opengm::Minimizer>();
@@ -244,6 +248,19 @@ BOOST_PYTHON_MODULE_INIT(_inference) {
          export_bp<opengm::python::GmAdder,opengm::Integrator>();
          export_trbp<opengm::python::GmAdder,opengm::Integrator>();
          //export_dynp<opengm::python::GmMultiplier,opengm::Maximizer>();
+      }
+      // logsumexp
+      {
+         subsubstring=logsumexpString;
+         subsubmoduleName = currentScopeName + std::string(".") + substring  + std::string(".") + subsubstring ;
+         // Create the submodule, and attach it to the current scope.
+         object subsubmodule(borrowed(PyImport_AddModule(subsubmoduleName.c_str())));
+         submoduleScope.attr(subsubstring.c_str()) = subsubmodule;
+         //subsubmodule.attr("__package__")=subsubmoduleName.c_str();
+         scope subsubmoduleScope = subsubmodule;
+         
+         export_bp<opengm::python::GmAdder,opengm::Logsumexp>();
+         export_bruteforce<opengm::python::GmAdder,opengm::Logsumexp>();
       }
    }
    //multiplier
